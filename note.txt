@@ -1,0 +1,581 @@
+Refactoring Plan: Domain-Based CodeMelody with Student/Admin CRUD and E2E Flows
+This plan details a major structural refactoring of CodeMelody. Drawing architectural inspiration from modern learning platforms like Coursera and Udemy, we will move from a flat file structure to a clean Domain-Based Architecture. We will introduce a three-tiered user system (Admin, Lecturer, Student), implement complete CRUD operations, and build end-to-end student enrollment pipelines.
+
+Architecture Design: Domain-Based Structure
+Rather than having all files located flatly in the root directory, we will partition the application into self-contained domains. This layout prevents cross-domain pollution and ensures the codebase scales cleanly.
+
+
+codemelody/
+│
+├── config/
+│   ├── config.php                 # Database configuration parameters
+│   └── bootstrap.php              # Global bootstrap (sessions, auth checks, helpers)
+│
+├── templates/
+│   ├── header.php                 # Shared responsive header with dynamic nav tabs
+│   └── footer.php                 # Shared layouts footer, modals, and toast scripts
+│
+├── auth/
+│   ├── login.php                  # Multi-role login screen (Student / Lecturer / Admin)
+│   ├── register.php               # User registration screen
+│   └── logout.php                 # Session destruction
+│
+├── dashboard/
+│   ├── admin.php                  # Admin panel (user CRUD, platform-wide analytics)
+│   ├── lecturer.php               # Lecturer overview (course lists, student engagement stats)
+│   └── student.php                # Student dashboard (enrolled courses, search, browse)
+│
+├── courses/
+│   ├── index.php                  # Course catalog (browse and search courses)
+│   ├── create.php                 # Add new course (Lecturer / Admin only)
+│   ├── edit.php                   # Edit course metadata (Lecturer / Admin only)
+│   ├── delete.php                 # Soft-delete course (Lecturer / Admin only)
+│   └── enroll.php                 # Student enrollment / cancellation pipeline
+│
+└── students/
+    ├── index.php                  # Student directory (Lecturer / Admin only)
+    ├── create.php                 # Add new student user (Admin only)
+    ├── edit.php                   # Edit student profile data (Student / Admin only)
+    └── delete.php                 # Delete student user (Admin only)
+1. Database Schema Extensions
+To enable students to log in and support full enrollment flows, we will expand codemelody_database.sql:
+
+Role Extensions: Modify the role enum in the users table to support 'student', 'lecturer', and 'admin'.
+Student Linkage: Add a nullable user_id column to the students table referencing users(id). This links student profile details directly to their login credentials.
+Enrollments Table: Create a joint table enrollments to track student course registrations:
+sql
+
+CREATE TABLE enrollments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id INT NOT NULL,
+    course_id INT NOT NULL,
+    enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    grade VARCHAR(5) DEFAULT NULL,
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_enrollment (student_id, course_id)
+);
+2. Refactoring Domains
+Config & Templates
+Move configurations to config/.
+Update layout_header.php and layout_footer.php to reside in templates/ and dynamically render navigation paths relative to domain subdirectories.
+Auth Domain
+Refactor login to authenticate Admins, Lecturers, and Students into their respective dashboards.
+Refactor registration to create both a users record and a corresponding students record when registering as a Student.
+Dashboard Domain
+Create three specialized dashboards:
+
+Admin Dashboard: Global statistics (Total users, total courses, enrollment rate), quick actions, and user administration.
+Lecturer Dashboard: Manage their own courses, see recent student activities, and review stats.
+Student Dashboard (Coursera/Udemy style):
+"My Enrolled Courses" progress cards.
+"Explore Courses" grid to search and enroll in new courses.
+Courses Domain (Full CRUD + Enrollment)
+Create/Edit/Delete: Complete form-based actions for managing course parameters (Credit Units, Status, LH, PH, description).
+Enrollment: A student clicks "Enroll" on a course card to record a row in the enrollments table. They can also "Unenroll" directly from their dashboard.
+Students Domain (Full CRUD)
+Admin Management: Admins can view, edit, create, or delete student profiles and login credentials.
+3. End-to-End Flow Validation
+We will implement clean redirect logic:
+
+Landing on index.php (root) will check if a session exists and redirect to the correct dashboard based on role, or to auth/login.php if unauthenticated.
+Clicking any sidebar links will direct seamlessly to the updated sub-folders.
+Open Questions
+IMPORTANT
+
+1. Legacy File Cleanup: Do you want me to keep the legacy files (like dashboard.php, my_courses.php in the root) after migrating to the domain-based folders, or should we delete them to keep the project clean? 2. Admin Role Onboarding: For register.php, should it allow registering as both Students and Lecturers, or should only Students register, leaving Lecturer/Admin registration to the Admin dashboard? (Recommended: Only allow Student self-registration; Lecturers and Admins are added by an existing Admin).
+
+Verification Plan
+Automated Tests
+Parse/Syntax checking on all domain files: Get-ChildItem -Recurse -Filter *.php | ForEach-Object { C:\xampp6\php\php.exe -l $_.FullName }
+Manual Verification
+Student Registration: Sign up as a new student via /auth/register.php.
+Student Login: Login as the new student, view Student Dashboard, browse and enroll in a course, and confirm it appears in "My Enrolled Courses".
+Lecturer Login: Login as a lecturer (jane.doe@university.edu), create a new course, and verify the student can see it.
+Admin Login: Create an admin user, log in, navigate to /students/index.php, view, edit, or delete student records.
+
+
+
+
+Analyzed the uploaded ZIP: [codemelody (2).zip](C:/xampp6/htdocs/codemelody%20(2).zip) and the extracted project at [codemelody](C:/xampp6/htdocs/codemelody). No code generated.
+
+One note: I attempted to inspect the live MySQL database, but MySQL is currently not reachable: `Can't connect to MySQL server on 'localhost' (10061)`. So the database review below is based on [codemelody_database.sql](C:/xampp6/htdocs/codemelody/codemelody_database.sql).
+
+**A. Folder Structure**
+```text
+codemelody/
+├── assets/
+│   ├── css/
+│   │   ├── dashboard.css
+│   │   └── style.css
+│   └── js/
+│       ├── dashboard.js
+│       └── main.js
+├── auth/
+│   ├── login.php
+│   ├── logout.php
+│   └── register.php
+├── config/
+│   ├── bootstrap.php
+│   └── config.php
+├── courses/
+│   ├── create.php
+│   ├── delete.php
+│   ├── edit.php
+│   ├── enroll.php
+│   ├── index.php
+│   ├── learn.php
+│   ├── show.php
+│   └── partials/course_form.php
+├── dashboard/
+│   ├── admin.php
+│   ├── lecturer.php
+│   └── student.php
+├── lecturers/
+│   ├── create.php
+│   ├── delete.php
+│   ├── edit.php
+│   ├── index.php
+│   └── partials/lecturer_form.php
+├── students/
+│   ├── create.php
+│   ├── delete.php
+│   ├── edit.php
+│   ├── index.php
+│   └── partials/student_form.php
+├── templates/
+│   ├── footer.php
+│   └── header.php
+├── codemelody_database.sql
+├── index.php
+├── bootstrap.php
+├── config.php
+└── legacy/redirect-style root pages:
+    dashboard.php, courses.php, students.php, my_courses.php,
+    create_course.php, register.php, logout.php
+```
+
+Additional legacy/static feature pages still exist at root:
+
+- [analytics.php](C:/xampp6/htdocs/codemelody/analytics.php)
+- [assignments.php](C:/xampp6/htdocs/codemelody/assignments.php)
+- [live_sessions.php](C:/xampp6/htdocs/codemelody/live_sessions.php)
+- [quizzes.php](C:/xampp6/htdocs/codemelody/quizzes.php)
+- [resources.php](C:/xampp6/htdocs/codemelody/resources.php)
+- [layout_header.php](C:/xampp6/htdocs/codemelody/layout_header.php)
+- [layout_footer.php](C:/xampp6/htdocs/codemelody/layout_footer.php)
+
+These are not fully integrated into the new domain architecture.
+
+**B. Database Tables**
+From [codemelody_database.sql](C:/xampp6/htdocs/codemelody/codemelody_database.sql):
+
+`users`
+- Stores login identity.
+- Columns: `id`, `email`, `password`, `full_name`, `role`, `avatar_initials`, `created_at`.
+- Roles: `student`, `lecturer`, `admin`.
+
+`students`
+- Stores student profile.
+- Columns: `id`, `user_id`, `matric_no`, `full_name`, `email`, `program`, `level`, `enrolled_at`.
+- Linked to `users.id`.
+
+`courses`
+- Stores course metadata and basic learning content.
+- Columns include:
+  - `code`, `title`, `credit_units`
+  - `lecture_hours`, `practical_hours`
+  - `status`, `color_class`
+  - `is_paid`, `price`
+  - `description`
+  - `video_url`
+  - `learning_content`
+  - `lecturer_id`
+
+`enrollments`
+- Join table between students and courses.
+- Columns: `id`, `student_id`, `course_id`, `enrolled_at`, `grade`.
+- Has unique `student_id + course_id`.
+
+`activities`
+- Stores recent activity feed text.
+- Columns: `id`, `user_id`, `action_type`, `description`, `created_at`.
+
+Missing tables for planned features:
+- `course_modules`
+- `course_lessons`
+- `lesson_videos`
+- `lesson_readings`
+- `student_notes`
+- `student_progress`
+- `notifications`
+- `notification_reads`
+- `search_logs` or searchable indexes
+- `course_resources`
+- `payments` or `transactions`
+
+**C. Existing Features**
+Authentication:
+- [auth/login.php](C:/xampp6/htdocs/codemelody/auth/login.php)
+- [auth/register.php](C:/xampp6/htdocs/codemelody/auth/register.php)
+- [auth/logout.php](C:/xampp6/htdocs/codemelody/auth/logout.php)
+- Multi-role login works by checking `users.role`.
+- Student self-registration creates both `users` and `students`.
+
+Role dashboards:
+- [dashboard/admin.php](C:/xampp6/htdocs/codemelody/dashboard/admin.php)
+  - Shows total users, courses, students, enrollments.
+  - Links to students, lecturers, courses.
+- [dashboard/lecturer.php](C:/xampp6/htdocs/codemelody/dashboard/lecturer.php)
+  - Shows lecturer’s courses.
+  - Shows recent activities.
+- [dashboard/student.php](C:/xampp6/htdocs/codemelody/dashboard/student.php)
+  - Shows enrolled courses.
+  - Shows available courses.
+  - Has `Start Learning` for enrolled courses.
+
+Course system:
+- [courses/index.php](C:/xampp6/htdocs/codemelody/courses/index.php)
+  - Course catalog.
+  - Student enroll/unenroll.
+  - Paid/free display.
+- [courses/show.php](C:/xampp6/htdocs/codemelody/courses/show.php)
+  - Course detail page.
+- [courses/learn.php](C:/xampp6/htdocs/codemelody/courses/learn.php)
+  - Student-only learning page.
+  - Requires enrollment.
+  - Shows video iframe if `video_url` exists.
+  - Shows fallback learning content.
+- [courses/create.php](C:/xampp6/htdocs/codemelody/courses/create.php)
+- [courses/edit.php](C:/xampp6/htdocs/codemelody/courses/edit.php)
+- [courses/delete.php](C:/xampp6/htdocs/codemelody/courses/delete.php)
+- [courses/enroll.php](C:/xampp6/htdocs/codemelody/courses/enroll.php)
+
+Student management:
+- Admin can create/edit/delete students.
+- Students can edit their own profile.
+
+Lecturer management:
+- Admin can create/edit/delete lecturers.
+- Lecturers are stored in `users` with role `lecturer`.
+
+Reusable components:
+- [config/bootstrap.php](C:/xampp6/htdocs/codemelody/config/bootstrap.php)
+  - Session start
+  - DB load
+  - Auth helpers
+  - Role guard
+  - Metrics
+  - URL helper
+- [templates/header.php](C:/xampp6/htdocs/codemelody/templates/header.php)
+  - Role-based navigation
+  - Search input
+  - Notification button
+- [templates/footer.php](C:/xampp6/htdocs/codemelody/templates/footer.php)
+  - Shared JS loading
+  - Toast container
+- [assets/js/main.js](C:/xampp6/htdocs/codemelody/assets/js/main.js)
+  - Client-side search/filter
+  - Form validation
+  - Utility helpers
+- [assets/js/dashboard.js](C:/xampp6/htdocs/codemelody/assets/js/dashboard.js)
+  - Sidebar toggle
+  - Toasts
+  - Notification placeholder
+  - Legacy modal functions
+
+**D. Missing Features**
+Course Video System:
+- No separate lesson/module structure.
+- Only one `video_url` per course.
+- No uploaded videos.
+- No video duration, completion state, watch tracking, captions, thumbnails, or ordering.
+- No validation that `video_url` is embeddable.
+
+Course Reading System:
+- Only one `learning_content` field per course.
+- No multiple readings, lesson sections, downloadable PDFs, resource attachments, or rich text editor.
+
+Course Guide Actions:
+- Current guide actions are static text in [courses/learn.php](C:/xampp6/htdocs/codemelody/courses/learn.php).
+- No interactive checklist.
+- No “mark as read”, “watch complete”, “take quiz”, “ask question”, or “download resource”.
+
+Student Notes:
+- No notes table.
+- No per-course/per-lesson notes.
+- No autosave, edit/delete, timestamps, or private/public note options.
+
+Search System:
+- Header search only filters visible `.course-item` elements on the current page.
+- It does not search students, lecturers, lessons, readings, notes, or dashboard content.
+- No server-side search endpoint.
+
+Notification System:
+- Notification button only calls `showToast('You have 5 new notifications!')`.
+- No notification table.
+- No unread counts.
+- No persistent notifications.
+- No role-specific notification feed.
+
+Progress Tracking:
+- No progress table.
+- Enrolled courses do not track lesson completion.
+- No dashboard progress bars.
+- `enrollments.grade` exists but is unused.
+
+Student Dashboard:
+- Basic stats and course lists exist.
+- Missing:
+  - progress cards
+  - continue last lesson
+  - recent activity
+  - notes shortcuts
+  - notifications
+  - recommended courses
+  - paid/free status filtering
+  - completed/in-progress grouping
+
+Payments:
+- `is_paid` and `price` exist.
+- No payment workflow.
+- No payment status on enrollments.
+- Students can enroll in paid courses without payment validation.
+
+**E. Potential Problems**
+1. `dashboard.js` references removed legacy modal elements.
+   - `openModal()`, `closeModal()`, `createCourse()`, and direct `document.getElementById('createModal').addEventListener(...)` assume `createModal` exists.
+   - In the new [templates/footer.php](C:/xampp6/htdocs/codemelody/templates/footer.php), no modal exists.
+   - This can cause JavaScript errors on pages.
+
+2. `dashboard.js` still posts to legacy `courses.php`.
+   - Root [courses.php](C:/xampp6/htdocs/codemelody/courses.php) is now only a redirect.
+   - AJAX course creation/export logic is stale.
+
+3. Sanitization strips HTML from `learning_content`.
+   - Good for safety, but limits rich formatted lessons.
+   - Current display uses `white-space: pre-line`, not rich text.
+
+4. Course video URL is trusted into an iframe.
+   - It is escaped, but not validated against allowed providers.
+   - Could lead to bad embeds or unwanted external content.
+
+5. Paid courses are not actually protected by payment.
+   - Students can enroll regardless of `is_paid`.
+
+6. Delete operations use GET links.
+   - Example: lecturer/student/course delete actions.
+   - Should be POST with CSRF protection.
+
+7. No CSRF protection.
+   - Forms can be submitted cross-site.
+
+8. No centralized flash messaging.
+   - Errors and success messages are per-page or JS-only.
+
+9. Role authorization is present but coarse.
+   - More granular policies would help: course owner, enrolled student, admin override.
+
+10. Legacy root pages are half-integrated.
+   - Some root feature pages still use old layout files.
+   - New domain routes use `templates/`.
+   - This creates two UI systems.
+
+11. Database migrations are destructive in the SQL file.
+   - It drops all tables.
+   - Fine for fresh install, risky for live project updates.
+
+12. Search and notification UI are placeholders.
+   - They look real but are not backed by data.
+
+**F. Recommended Architecture**
+Keep the domain-based structure, but mature it:
+
+```text
+codemelody/
+├── config/
+│   ├── config.php
+│   ├── bootstrap.php
+│   └── migrations/
+├── templates/
+│   ├── header.php
+│   ├── footer.php
+│   ├── flash.php
+│   └── components/
+├── auth/
+├── dashboard/
+├── courses/
+│   ├── index.php
+│   ├── show.php
+│   ├── learn.php
+│   ├── modules/
+│   ├── lessons/
+│   └── partials/
+├── students/
+├── lecturers/
+├── notifications/
+├── search/
+├── notes/
+├── progress/
+└── api/
+```
+
+Recommended backend direction:
+- Keep PDO.
+- Add migration files instead of destructive SQL.
+- Add CSRF helpers.
+- Add flash message helpers.
+- Add policy helpers:
+  - `can_manage_course($user, $course)`
+  - `can_view_learning_room($user, $courseId)`
+  - `is_enrolled($studentId, $courseId)`
+
+Recommended learning model:
+- Course has many modules.
+- Module has many lessons.
+- Lesson can have video, reading, guide actions, resources.
+- Student progress is stored per lesson.
+- Student notes are stored per lesson or course.
+
+**Phase 2 Implementation Roadmap**
+
+1. Course Video System
+- Add `course_lessons` table:
+  - `id`, `course_id`, `module_id`, `title`, `video_url`, `video_provider`, `video_duration`, `sort_order`, `is_preview`, `created_at`.
+- Add video validation:
+  - Accept YouTube embed URLs first.
+  - Later support local uploads or Vimeo.
+- Update lecturer/admin course edit page:
+  - Add lesson manager.
+  - Add video URL per lesson.
+- Update student learning page:
+  - Left lesson list.
+  - Main video player.
+  - Completed state.
+
+2. Course Reading System
+- Add `lesson_readings` or include reading fields on `course_lessons`.
+- Recommended table:
+  - `lesson_readings(id, lesson_id, title, content, sort_order, created_at)`.
+- Support plain text first.
+- Later add rich text safely using a whitelist sanitizer.
+- Display reading below or beside video.
+
+3. Course Guide Actions
+- Add `lesson_actions`:
+  - `id`, `lesson_id`, `action_type`, `title`, `description`, `sort_order`.
+- Add `student_action_completions`:
+  - `student_id`, `action_id`, `completed_at`.
+- Action types:
+  - `read`
+  - `watch`
+  - `practice`
+  - `quiz`
+  - `summary`
+- Student can tick off guide actions.
+
+4. Student Notes
+- Add `student_notes`:
+  - `id`, `student_id`, `course_id`, `lesson_id`, `title`, `body`, `created_at`, `updated_at`.
+- Add notes panel to `courses/learn.php`.
+- Start with manual save.
+- Later add autosave with AJAX.
+
+5. Search System
+- Short-term:
+  - Improve client search to include course cards, student tables, lecturer tables.
+- Medium-term:
+  - Add `/search/index.php?q=...`
+  - Server-side search across:
+    - courses
+    - lecturers
+    - students
+    - lessons
+    - readings
+- Long-term:
+  - Add full-text indexes:
+    - `courses(title, code, description, learning_content)`
+    - `course_lessons(title, reading_content)`
+
+6. Notification System
+- Add `notifications`:
+  - `id`, `user_id`, `role_target`, `title`, `message`, `type`, `url`, `created_at`.
+- Add `notification_reads` or `read_at` column.
+- Header notification icon should show unread count.
+- Notification dropdown:
+  - Latest 5
+  - View all
+- Trigger notifications on:
+  - enrollment
+  - new course
+  - new lesson
+  - lecturer update
+  - admin announcements
+
+7. Student Dashboard Improvements
+- Add “Continue Learning” section.
+- Add progress bars per enrolled course.
+- Add “Last opened lesson”.
+- Add “My Notes” shortcut.
+- Add “New lessons” notifications.
+- Add course grouping:
+  - In progress
+  - Completed
+  - Not started
+- Add paid/free tags and enrolled date.
+
+8. Progress Tracking
+- Add `student_lesson_progress`:
+  - `student_id`, `lesson_id`, `course_id`, `status`, `progress_percent`, `completed_at`, `last_accessed_at`.
+- Status values:
+  - `not_started`
+  - `in_progress`
+  - `completed`
+- On opening lesson:
+  - mark as `in_progress`
+  - update `last_accessed_at`
+- Add “Mark Complete” button.
+- Compute course progress:
+  - completed lessons / total lessons.
+
+9. Database Migrations
+- Stop using only destructive `DROP TABLE` SQL for updates.
+- Add migration files:
+  - `001_create_core_tables.sql`
+  - `002_add_course_learning_fields.sql`
+  - `003_create_lessons_modules.sql`
+  - `004_create_notes_progress_notifications.sql`
+- Add a simple `schema_migrations` table:
+  - `version`, `applied_at`.
+- Keep `codemelody_database.sql` for fresh installs only.
+
+10. UI/UX Improvements
+- Fix stale JS in [assets/js/dashboard.js](C:/xampp6/htdocs/codemelody/assets/js/dashboard.js).
+- Remove references to missing modal.
+- Convert inline styles into reusable CSS classes.
+- Improve learning page:
+  - Lesson sidebar
+  - Video section
+  - Reading section
+  - Notes panel
+  - Progress/action checklist
+- Improve mobile behavior for course actions.
+- Add empty states:
+  - no lessons
+  - no notes
+  - no notifications
+- Add status messages after enroll, unenroll, save note, complete lesson.
+
+**Suggested Build Order**
+1. Fix JS errors and remove legacy modal assumptions.
+2. Add migration system.
+3. Add course modules/lessons schema.
+4. Convert `courses/learn.php` from course-level content to lesson-level content.
+5. Add student progress tracking.
+6. Add student notes.
+7. Add notification tables and header dropdown.
+8. Upgrade search to server-side.
+9. Polish dashboard UI.
+10. Add payment enforcement for paid courses.
+
+I’ll wait for your approval before generating or editing any code.
