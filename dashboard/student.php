@@ -35,7 +35,7 @@ require_once __DIR__ . '/../templates/header.php';
                 <div class="course-thumb <?php echo htmlspecialchars($course['color_class']); ?>"><?php echo htmlspecialchars(substr(str_replace(['HUI-', ' '], '', $course['code']), 0, 2)); ?></div>
                 <div class="course-info"><div class="course-code"><?php echo htmlspecialchars($course['code']); ?></div><div class="course-name"><?php echo htmlspecialchars($course['title']); ?></div><div class="course-meta"><span><i class="fas fa-calendar"></i>Since <?php echo date('M j', strtotime($course['enrolled_at'])); ?></span><span><i class="fas fa-cube"></i><?php echo (int)$course['credit_units']; ?> Units</span></div></div>
                 <button class="btn btn-primary" onclick="window.location='<?php echo app_url('courses/learn.php?id=' . (int)$course['id']); ?>'">Start Learning</button>
-                <form method="post" action="<?php echo app_url('courses/enroll.php'); ?>"><input type="hidden" name="course_id" value="<?php echo (int)$course['id']; ?>"><input type="hidden" name="action" value="unenroll"><button class="btn btn-secondary" type="submit">Unenroll</button></form>
+                <form method="post" action="<?php echo app_url('courses/enroll.php'); ?>"><input type="hidden" name="course_id" value="<?php echo (int)$course['id']; ?>"><input type="hidden" name="action" value="unenroll"><?php echo csrf_field(); ?><button class="btn btn-secondary" type="submit">Unenroll</button></form>
             </div>
         <?php endforeach; ?>
     </div>
@@ -48,7 +48,7 @@ require_once __DIR__ . '/../templates/header.php';
             <div class="course-item">
                 <div class="course-thumb <?php echo htmlspecialchars($course['color_class']); ?>"><?php echo htmlspecialchars(substr(str_replace(['HUI-', ' '], '', $course['code']), 0, 2)); ?></div>
                 <div class="course-info"><div class="course-code"><?php echo htmlspecialchars($course['code']); ?></div><div class="course-name"><?php echo htmlspecialchars($course['title']); ?></div><div class="course-meta"><span><i class="fas fa-cube"></i><?php echo (int)$course['credit_units']; ?> Units</span><span><?php echo ucfirst(htmlspecialchars($course['status'])); ?></span></div></div>
-                <form method="post" action="<?php echo app_url('courses/enroll.php'); ?>"><input type="hidden" name="course_id" value="<?php echo (int)$course['id']; ?>"><input type="hidden" name="action" value="enroll"><button class="btn btn-primary" type="submit">Enroll</button></form>
+                <form method="post" action="<?php echo app_url('courses/enroll.php'); ?>"><input type="hidden" name="course_id" value="<?php echo (int)$course['id']; ?>"><input type="hidden" name="action" value="enroll"><?php echo csrf_field(); ?><button class="btn btn-primary" type="submit">Enroll</button></form>
             </div>
         <?php endforeach; ?>
     </div>

@@ -5,6 +5,7 @@ require_role($user, ['lecturer', 'admin']);
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf_token();
     $status = sanitize($_POST['status'] ?? 'compulsory');
     $colorClass = $status === 'elective' ? 'cyan' : ($status === 'required' ? 'amber' : 'indigo');
     try {
@@ -38,6 +39,7 @@ require_once __DIR__ . '/../templates/header.php';
 <?php if ($error): ?><div class="card" style="padding:16px;margin-bottom:20px;color:#991b1b;background:#fee2e2;"><?php echo htmlspecialchars($error); ?></div><?php endif; ?>
 <div class="card" style="padding:24px;">
     <form method="post">
+        <?php echo csrf_field(); ?>
         <?php require __DIR__ . '/partials/course_form.php'; ?>
         <button class="btn btn-primary" type="submit">Create Course</button>
     </form>

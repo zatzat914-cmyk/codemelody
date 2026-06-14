@@ -63,6 +63,13 @@
 
     <script src="assets/js/main.js"></script>
     <script src="assets/js/dashboard.js"></script>
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js');
+        });
+    }
+    </script>
     <?php if (isset($extraJs)): ?>
         <?php foreach ($extraJs as $js): ?>
             <script src="<?php echo htmlspecialchars($js); ?>"></script>

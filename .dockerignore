@@ -1,0 +1,6 @@
+.git
+.gitignore
+*.md
+note.txt
+.gitattributes
+database/

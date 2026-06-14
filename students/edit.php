@@ -16,6 +16,7 @@ if ($user['role'] === 'student') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf_token();
     $fullName = sanitize($_POST['full_name'] ?? '');
     $email = sanitize($_POST['email'] ?? '');
     if ((int)$student['id'] === 0) {
@@ -39,6 +40,7 @@ require_once __DIR__ . '/../templates/header.php';
 <p class="page-subtitle">Keep student profile and login identity aligned.</p>
 <div class="card" style="padding:24px;">
     <form method="post">
+        <?php echo csrf_field(); ?>
         <?php require __DIR__ . '/partials/student_form.php'; ?>
         <button class="btn btn-primary" type="submit">Save Profile</button>
     </form>

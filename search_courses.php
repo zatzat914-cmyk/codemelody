@@ -11,7 +11,8 @@ if (strlen($query) < 1) {
     exit;
 }
 
-$like = '%' . $query . '%';
+$escaped = str_replace(['%', '_'], ['\\%', '\\_'], $query);
+$like = '%' . $escaped . '%';
 $stmt = $pdo->prepare('
     SELECT id, code, title, color_class  
     FROM courses 

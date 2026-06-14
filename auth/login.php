@@ -7,6 +7,7 @@ if (isset($_SESSION['user_id'], $_SESSION['role'])) {
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf_token();
     $email = sanitize($_POST['email'] ?? '');
     $password = (string)($_POST['password'] ?? '');
 
@@ -53,6 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <input type="email" name="email" required autofocus>
         <label>Password</label>
         <input type="password" name="password" required>
+        <?php echo csrf_field(); ?>
         <button type="submit">Sign In</button>
         <div class="link">New student? <a href="<?php echo app_url('auth/register.php'); ?>">Create an account</a></div>
     </form>

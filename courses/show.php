@@ -39,12 +39,14 @@ require_once __DIR__ . '/../templates/header.php';
                 <form method="post" action="<?php echo app_url('courses/enroll.php'); ?>">
                     <input type="hidden" name="course_id" value="<?php echo (int)$course['id']; ?>">
                     <input type="hidden" name="action" value="unenroll">
+                    <?php echo csrf_field(); ?>
                     <button class="btn btn-secondary" type="submit">Unenroll</button>
                 </form>
             <?php else: ?>
                 <form method="post" action="<?php echo app_url('courses/enroll.php'); ?>">
                     <input type="hidden" name="course_id" value="<?php echo (int)$course['id']; ?>">
                     <input type="hidden" name="action" value="enroll">
+                    <?php echo csrf_field(); ?>
                     <button class="btn btn-primary" type="submit">Enroll to Learn</button>
                 </form>
             <?php endif; ?>

@@ -5,6 +5,7 @@ require_role($user, ['admin']);
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf_token();
     $fullName = sanitize($_POST['full_name'] ?? '');
     $email = sanitize($_POST['email'] ?? '');
     $password = (string)($_POST['password'] ?? 'lecturer123');
@@ -27,6 +28,7 @@ require_once __DIR__ . '/../templates/header.php';
 <?php if ($error): ?><div class="card" style="padding:16px;margin-bottom:20px;color:#991b1b;background:#fee2e2;"><?php echo htmlspecialchars($error); ?></div><?php endif; ?>
 <div class="card" style="padding:24px;">
     <form method="post">
+        <?php echo csrf_field(); ?>
         <?php require __DIR__ . '/partials/lecturer_form.php'; ?>
         <div class="form-group">
             <label class="form-label">Temporary Password</label>

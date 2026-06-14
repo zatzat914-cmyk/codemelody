@@ -4,6 +4,7 @@ require_once __DIR__ . '/../config/bootstrap.php';
 $error = '';
 $success = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf_token();
     $fullName = sanitize($_POST['full_name'] ?? '');
     $email = sanitize($_POST['email'] ?? '');
     $password = (string)($_POST['password'] ?? '');
@@ -72,6 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         <label>Password</label>
         <input type="password" name="password" required>
+        <?php echo csrf_field(); ?>
         <button type="submit">Register</button>
         <div class="link">Already registered? <a href="<?php echo app_url('auth/login.php'); ?>">Sign in</a></div>
     </form>

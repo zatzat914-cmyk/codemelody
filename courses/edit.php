@@ -11,6 +11,7 @@ if (!$course) redirect_to('courses/index.php');
 if ($user['role'] !== 'admin' && (int)$course['lecturer_id'] !== (int)$user['id']) redirect_to('courses/index.php');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf_token();
     $status = sanitize($_POST['status'] ?? 'compulsory');
     $stmt = $pdo->prepare('UPDATE courses SET code = ?, title = ?, credit_units = ?, lecture_hours = ?, practical_hours = ?, status = ?, is_paid = ?, price = ?, description = ?, video_url = ?, learning_content = ? WHERE id = ?');
     $stmt->execute([
@@ -37,6 +38,7 @@ require_once __DIR__ . '/../templates/header.php';
 <p class="page-subtitle"><?php echo htmlspecialchars($course['code']); ?> metadata and delivery hours.</p>
 <div class="card" style="padding:24px;">
     <form method="post">
+        <?php echo csrf_field(); ?>
         <?php require __DIR__ . '/partials/course_form.php'; ?>
         <div style="display:flex; gap:12px;">
             <button class="btn btn-primary" type="submit">Save Changes</button>
