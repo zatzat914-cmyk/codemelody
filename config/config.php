@@ -30,8 +30,9 @@ try {
         PDO::ATTR_EMULATE_PREPARES   => false,
     ];
 
-    if ($isProduction) {
-        $options[PDO::MYSQL_ATTR_SSL_CA] = getenv('MYSQL_SSL_CA') ?: '/etc/ssl/certs/ca-certificates.crt';
+    $sslCa = getenv('MYSQL_SSL_CA');
+    if ($sslCa) {
+        $options[PDO::MYSQL_ATTR_SSL_CA] = $sslCa;
         $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
     }
 
