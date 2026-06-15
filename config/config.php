@@ -1,4 +1,7 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 $isProduction = (bool)getenv('RENDER');
 
 define('IS_PRODUCTION', $isProduction);
@@ -33,9 +36,7 @@ try {
 
     $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
 } catch (PDOException $e) {
-    if ($isProduction) {
-        error_log('Database connection failed: ' . $e->getMessage());
-    }
+    error_log('CRITICAL DATABASE ERROR: ' . $e->getMessage());
     http_response_code(500);
     die('An internal error occurred. Please try again later.');
 }
